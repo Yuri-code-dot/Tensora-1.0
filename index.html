@@ -2,156 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tensora AI | by Baki Sora</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #09090b; color: #fafafa; overflow: hidden; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        input:focus { font-size: 16px !important; }
-        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(39, 39, 42, 0.8); }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tensora 1.0</title>
+    <script>
+        function logError(error) {
+            console.error('Error:', error);
+            // Add additional error handling mechanisms here
+        }
+        window.onerror = function(message, source, lineno, colno, error) {
+            logError(message);
+        };
+    </script>
 </head>
 <body>
-    <div id="app" class="h-screen flex flex-col md:flex-row">
-        <!-- Sidebar -->
-        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-zinc-900 border-r border-zinc-800 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
-            <div class="p-6 h-full flex flex-col">
-                <div class="flex items-center justify-between mb-8">
-                    <h1 class="text-xl font-bold flex items-center gap-2">
-                        <i data-lucide="sparkles" class="text-indigo-500 w-6 h-6"></i> Tensora
-                    </h1>
-                    <button onclick="toggleSidebar()" class="md:hidden p-2 text-zinc-400"><i data-lucide="x"></i></button>
-                </div>
-                <button onclick="newChat()" class="flex items-center gap-2 w-full p-4 mb-6 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 font-medium text-sm transition-all active:scale-95">
-                    <i data-lucide="plus" class="w-4 h-4"></i> New Chat
-                </button>
-                <div class="flex-1 overflow-y-auto space-y-2 no-scrollbar">
-                    <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2 mb-2">Recent Sessions</div>
-                    <div class="p-3 text-sm text-zinc-500 italic px-2">Your chat history is private to this device.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col relative h-full">
-            <header class="p-4 glass flex items-center justify-between sticky top-0 z-40">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2 text-zinc-400"><i data-lucide="menu"></i></button>
-                <div class="text-indigo-500 font-bold md:hidden text-lg tracking-tight">Tensora</div>
-                <div class="text-[10px] text-zinc-500 font-mono hidden md:block border border-zinc-800 px-2 py-1 rounded">V2.5 FLASH PREVIEW</div>
-                <div class="w-8 md:hidden"></div>
-            </header>
-
-            <div id="chat-container" class="flex-1 overflow-y-auto px-4 py-6 md:p-8 no-scrollbar scroll-smooth">
-                <div id="messages" class="max-w-3xl mx-auto space-y-6 pb-20">
-                    <!-- Welcome Box -->
-                    <div id="welcome" class="text-center py-16 space-y-6">
-                        <div class="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl">
-                            <i data-lucide="sparkles" class="w-12 h-12 text-indigo-500"></i>
-                        </div>
-                        <h2 class="text-3xl font-bold tracking-tight">Tensora AI</h2>
-                        <p class="text-zinc-400 text-sm max-w-[280px] mx-auto leading-relaxed">The only AI with enough personality to keep up with you. Built by Baki Sora.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Input Area -->
-            <footer class="p-4 md:p-8 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
-                <form id="chat-form" class="max-w-3xl mx-auto relative flex items-center" onsubmit="handleSubmit(event)">
-                    <input id="user-input" type="text" autocomplete="off" placeholder="Message Tensora..." 
-                        class="w-full bg-zinc-900 border border-zinc-800 rounded-[1.5rem] px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all text-[15px] shadow-2xl text-zinc-100">
-                    <button type="submit" class="absolute right-2.5 p-2.5 bg-indigo-600 text-white rounded-xl active:scale-90 transition-transform">
-                        <i data-lucide="send" class="w-5 h-5"></i>
-                    </button>
-                </form>
-                <div class="text-center mt-4 text-[9px] text-zinc-700 uppercase tracking-[0.3em] font-black">Tensora • Independent Edition</div>
-            </footer>
-        </main>
-    </div>
-
-    <script>
-        // --- CONFIGURATION ---
-        const API_KEY = "N/jbohM7KEdZXlHh5h3PhO1UloPWjQxeuYu8PFRY+RVOGTPbEvh9dY19igR0do4Vcx/UQI2PSc8UrtoDDybYiQ=="; 
-        const SYSTEM_PROMPT = "You are Tensora — a warm, witty, genuinely caring AI assistant. Casual energy, occasional light roasting, never robotic. Created by Baki Sora.";
-        
-        let chatHistory = [];
-        let isTyping = false;
-
-        function toggleSidebar() { 
-            document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
-        }
-
-        function appendMessage(role, content) {
-            const container = document.getElementById('messages');
-            const welcome = document.getElementById('welcome');
-            if (welcome) welcome.remove();
-            
-            const div = document.createElement('div');
-            div.className = `flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 ${role === 'user' ? 'flex-row-reverse' : ''}`;
-            
-            const bubbleClass = role === 'user' 
-                ? 'bg-zinc-100 text-zinc-950 rounded-2xl rounded-tr-none font-medium' 
-                : 'bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-2xl rounded-tl-none';
-
-            div.innerHTML = `
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${role === 'user' ? 'bg-zinc-800' : 'bg-indigo-600/20'}">
-                    <i data-lucide="${role === 'user' ? 'user' : 'sparkles'}" class="w-5 h-5 ${role === 'user' ? 'text-zinc-400' : 'text-indigo-400'}"></i>
-                </div>
-                <div class="max-w-[85%] px-5 py-3.5 shadow-xl text-[15px] leading-relaxed ${bubbleClass}">
-                    ${content.replace(/\n/g, '<br>')}
-                </div>`;
-            
-            container.appendChild(div);
-            lucide.createIcons();
-            
-            const chatContainer = document.getElementById('chat-container');
-            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-        }
-
-        async function handleSubmit(e) {
-            e.preventDefault();
-            const input = document.getElementById('user-input');
-            const text = input.value.trim();
-            if (!text || isTyping) return;
-            
-            input.value = '';
-            appendMessage('user', text);
-            chatHistory.push({ role: 'user', content: text });
-            
-            isTyping = true;
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: chatHistory.map(m => ({ 
-                            role: m.role === 'assistant' ? 'model' : 'user', 
-                            parts: [{ text: m.content }] 
-                        })),
-                        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
-                    })
-                });
-                
-                const data = await response.json();
-                const reply = data.candidates[0].content.parts[0].text;
-                appendMessage('assistant', reply);
-                chatHistory.push({ role: 'assistant', content: reply });
-            } catch (err) {
-                appendMessage('assistant', "I'm having a minor existential crisis (or your API key is invalid). Check the code! 🔌");
-            } finally { 
-                isTyping = false; 
-            }
-        }
-
-        function newChat() {
-            if(confirm("Start a fresh session?")) location.reload();
-        }
-
-        // Initialize Lucide Icons
-        lucide.createIcons();
-    </script>
+    <header>
+        <h1>Welcome to Tensora 1.0</h1>
+    </header>
+    <main>
+        <h2>Features of Tensora</h2>
+        <ul>
+            <li>Feature 1</li>
+            <li>Feature 2</li>
+            <li>Feature 3</li>
+        </ul>
+    </main>
+    <footer>
+        <p>&copy; 2026 Yuri-code-dot. All rights reserved.</p>
+    </footer>
 </body>
 </html>
